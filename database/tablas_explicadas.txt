@@ -1,0 +1,681 @@
+Base de datos para sistema de gestión y análisis de stock
+Idea general del proyecto
+
+El proyecto consiste en crear una base de datos relacional para gestionar el stock de una organización. El sistema permitirá registrar productos, categorías, proveedores, depósitos, compras, ventas, usuarios operativos y movimientos de stock.
+
+La decisión principal del modelo es que no vamos a guardar el stock actual directamente en la tabla productos. En cambio, el stock se va a calcular a partir de los movimientos registrados en la tabla movimientos_stock.
+
+Esto evita errores, porque si guardáramos un campo stock_actual, cada compra, venta o ajuste tendría que actualizarlo manualmente. Si alguien se olvida, el dato queda mal. En nuestro modelo, el stock actual se obtiene calculando:
+
+Stock actual = entradas - salidas + ajustes positivos - ajustes negativos
+
+Por eso, la tabla más importante del sistema será movimientos_stock.
+
+1. Tabla categorias
+Explicación en lenguaje natural
+
+La tabla categorias guarda los grupos o familias a los que pertenecen los productos.
+
+Ejemplos de categorías:
+
+Bebidas
+Alimentos
+Limpieza
+Herramientas
+Librería
+Repuestos
+
+Sirve para ordenar los productos y luego poder analizar el stock por tipo de producto. Por ejemplo, podríamos consultar cuántos productos pertenecen a la categoría “Bebidas” o qué categoría tiene mayor valor de stock.
+
+Campos mínimos recomendados
+id_categoria
+nombre
+descripcion
+activo
+Clave primaria
+id_categoria
+Foreign keys
+
+No tiene foreign keys.
+
+Relaciones
+
+Una categoría puede tener muchos productos.
+
+categorias 1 ─── N productos
+
+Ejemplo:
+
+Categoría: Bebidas
+Productos: Agua mineral, Gaseosa, Jugo, Energizante
+2. Tabla proveedores
+Explicación en lenguaje natural
+
+La tabla proveedores guarda los datos de las empresas o personas que abastecen productos.
+
+Ejemplos:
+
+Distribuidora Córdoba
+Mayorista Norte
+Proveedor San Martín
+Importadora Central
+
+Sirve para saber de dónde vienen los productos y también para registrar compras realizadas a cada proveedor.
+
+Campos mínimos recomendados
+id_proveedor
+nombre
+cuit
+telefono
+email
+direccion
+activo
+Clave primaria
+id_proveedor
+Foreign keys
+
+No tiene foreign keys.
+
+Relaciones
+
+Un proveedor puede estar asociado a muchos productos.
+
+proveedores 1 ─── N productos
+
+Un proveedor también puede tener muchas compras registradas.
+
+proveedores 1 ─── N compras
+
+Ejemplo:
+
+Proveedor: Distribuidora Córdoba
+Productos: Leche, Yogur, Queso
+Compras: Compra #1, Compra #5, Compra #9
+3. Tabla productos
+Explicación en lenguaje natural
+
+La tabla productos guarda la información principal de cada producto que se controla en el sistema.
+
+Ejemplos:
+
+Leche entera 1L
+Harina 000 1kg
+Guantes de trabajo
+Tornillos 8mm
+Resma A4
+
+Esta tabla representa el catálogo de productos. Guarda datos propios del producto, pero no guarda el stock actual. El stock actual se calcula desde los movimientos.
+
+Sí debe guardar el stock_minimo, porque ese valor nos sirve para comparar contra el stock calculado y detectar productos que necesitan reposición.
+
+Campos mínimos recomendados
+id_producto
+nombre
+descripcion
+categoria_id
+proveedor_id
+precio_costo
+precio_venta
+stock_minimo
+activo
+fecha_alta
+Clave primaria
+id_producto
+Foreign keys
+categoria_id → categorias.id_categoria
+proveedor_id → proveedores.id_proveedor
+Relaciones
+
+Una categoría puede tener muchos productos.
+
+categorias 1 ─── N productos
+
+Un proveedor puede abastecer muchos productos.
+
+proveedores 1 ─── N productos
+
+Un producto puede tener muchos movimientos de stock.
+
+productos 1 ─── N movimientos_stock
+
+Un producto puede aparecer en muchos detalles de compra.
+
+productos 1 ─── N detalle_compra
+
+Un producto puede aparecer en muchos detalles de venta.
+
+productos 1 ─── N detalle_venta
+4. Tabla depositos
+Explicación en lenguaje natural
+
+La tabla depositos representa los lugares físicos donde puede haber stock.
+
+Ejemplos:
+
+Depósito central
+Local comercial
+Sucursal norte
+Sucursal sur
+Almacén secundario
+
+Agregar depósitos hace que el modelo sea más realista, porque permite saber no solo cuánto stock hay, sino también dónde se encuentra.
+
+Campos mínimos recomendados
+id_deposito
+nombre
+direccion
+descripcion
+activo
+Clave primaria
+id_deposito
+Foreign keys
+
+No tiene foreign keys.
+
+Relaciones
+
+Un depósito puede tener muchos movimientos de stock.
+
+depositos 1 ─── N movimientos_stock
+
+Ejemplo:
+
+Depósito central:
+- Entrada de 100 unidades de Leche
+- Salida de 20 unidades de Harina
+- Ajuste negativo de 5 unidades de Tornillos
+5. Tabla usuarios
+Explicación en lenguaje natural
+
+La tabla usuarios guarda quién realizó una acción dentro del sistema.
+
+En este proyecto no necesariamente habrá inicio de sesión. La tabla se usará simplemente para dejar registrado qué persona cargó una compra, una venta o un movimiento de stock.
+
+Ejemplos:
+
+Administrador
+Encargado de depósito
+Vendedor
+Responsable de compras
+
+Sirve para tener trazabilidad. No es lo mismo saber que “salieron 10 productos” que saber quién registró esa salida.
+
+Si más adelante el sistema se profesionalizara, esta tabla podría convertirse en una tabla real de usuarios con login, contraseña, roles y permisos.
+
+Campos mínimos recomendados
+id_usuario
+nombre
+apellido
+email
+rol
+activo
+Clave primaria
+id_usuario
+Foreign keys
+
+No tiene foreign keys.
+
+Relaciones
+
+Un usuario puede registrar muchos movimientos de stock.
+
+usuarios 1 ─── N movimientos_stock
+
+Un usuario puede registrar muchas compras.
+
+usuarios 1 ─── N compras
+
+Un usuario puede registrar muchas ventas.
+
+usuarios 1 ─── N ventas
+6. Tabla tipos_movimiento
+Explicación en lenguaje natural
+
+La tabla tipos_movimiento guarda los distintos motivos por los cuales cambia el stock.
+
+Ejemplos:
+
+Entrada por compra
+Salida por venta
+Ajuste positivo
+Ajuste negativo
+Devolución de cliente
+Devolución a proveedor
+Pérdida
+Rotura
+
+Esta tabla evita escribir el tipo de movimiento como texto libre en cada movimiento. Eso es importante porque, si no, podrían aparecer valores mal cargados como:
+
+Entrada
+entrada
+ENTRADA
+ingreso
+
+Todos significan algo parecido, pero para una base de datos son valores distintos. Eso después complica las consultas y el análisis.
+
+Además, esta tabla debería tener un campo llamado signo, para indicar si el movimiento suma o resta stock.
+
+Ejemplo:
+
+Entrada por compra → signo = 1
+Salida por venta → signo = -1
+Ajuste positivo → signo = 1
+Ajuste negativo → signo = -1
+Campos mínimos recomendados
+id_tipo_movimiento
+nombre
+descripcion
+signo
+activo
+Clave primaria
+id_tipo_movimiento
+Foreign keys
+
+No tiene foreign keys.
+
+Relaciones
+
+Un tipo de movimiento puede aparecer en muchos movimientos de stock.
+
+tipos_movimiento 1 ─── N movimientos_stock
+7. Tabla movimientos_stock
+Explicación en lenguaje natural
+
+Esta es la tabla central del sistema.
+
+La tabla movimientos_stock registra cada cambio de stock que ocurre sobre un producto.
+
+Ejemplos:
+
+Entraron 50 unidades de Leche al depósito central.
+Salieron 10 unidades de Harina por una venta.
+Se ajustaron 3 unidades por rotura.
+Se devolvieron 5 unidades al proveedor.
+
+Esta tabla permite tener trazabilidad completa. Cada vez que el stock cambia, debe existir un registro en esta tabla.
+
+La cantidad se debería guardar siempre como número positivo. Lo que define si suma o resta es el tipo de movimiento.
+
+Ejemplo:
+
+Movimiento: Entrada por compra
+Cantidad: 50
+Signo del tipo de movimiento: 1
+Impacto en stock: 50 * 1 = +50
+Movimiento: Salida por venta
+Cantidad: 10
+Signo del tipo de movimiento: -1
+Impacto en stock: 10 * -1 = -10
+Campos mínimos recomendados
+id_movimiento
+producto_id
+deposito_id
+tipo_movimiento_id
+usuario_id
+cantidad
+fecha_movimiento
+observacion
+compra_id
+venta_id
+Clave primaria
+id_movimiento
+Foreign keys
+producto_id → productos.id_producto
+deposito_id → depositos.id_deposito
+tipo_movimiento_id → tipos_movimiento.id_tipo_movimiento
+usuario_id → usuarios.id_usuario
+compra_id → compras.id_compra
+venta_id → ventas.id_venta
+Aclaración sobre compra_id y venta_id
+
+compra_id y venta_id son opcionales.
+
+Un movimiento puede venir de una compra, de una venta o de un ajuste manual.
+
+Ejemplos:
+
+Entrada por compra:
+compra_id tiene valor
+venta_id queda vacío
+Salida por venta:
+venta_id tiene valor
+compra_id queda vacío
+Ajuste por rotura:
+compra_id queda vacío
+venta_id queda vacío
+Relaciones
+
+Un producto puede tener muchos movimientos.
+
+productos 1 ─── N movimientos_stock
+
+Un depósito puede tener muchos movimientos.
+
+depositos 1 ─── N movimientos_stock
+
+Un tipo de movimiento puede aparecer en muchos movimientos.
+
+tipos_movimiento 1 ─── N movimientos_stock
+
+Un usuario puede registrar muchos movimientos.
+
+usuarios 1 ─── N movimientos_stock
+
+Una compra puede generar muchos movimientos de entrada.
+
+compras 1 ─── N movimientos_stock
+
+Una venta puede generar muchos movimientos de salida.
+
+ventas 1 ─── N movimientos_stock
+8. Tabla compras
+Explicación en lenguaje natural
+
+La tabla compras representa una compra realizada a un proveedor.
+
+Ejemplo:
+
+Compra #1
+Proveedor: Distribuidora Córdoba
+Fecha: 10/05/2026
+Total: $150.000
+Usuario que cargó la compra: Jordi
+
+Esta tabla funciona como encabezado de la operación. No guarda producto por producto, porque una compra puede incluir muchos productos. Los productos comprados se guardan en detalle_compra.
+
+Campos mínimos recomendados
+id_compra
+proveedor_id
+usuario_id
+fecha_compra
+numero_comprobante
+total
+observacion
+Clave primaria
+id_compra
+Foreign keys
+proveedor_id → proveedores.id_proveedor
+usuario_id → usuarios.id_usuario
+Relaciones
+
+Un proveedor puede tener muchas compras.
+
+proveedores 1 ─── N compras
+
+Un usuario puede registrar muchas compras.
+
+usuarios 1 ─── N compras
+
+Una compra puede tener muchos productos en su detalle.
+
+compras 1 ─── N detalle_compra
+
+Una compra puede generar movimientos de entrada de stock.
+
+compras 1 ─── N movimientos_stock
+9. Tabla detalle_compra
+Explicación en lenguaje natural
+
+La tabla detalle_compra guarda los productos incluidos dentro de cada compra.
+
+Ejemplo:
+
+Compra #1:
+- 30 unidades de Leche a $900 cada una
+- 20 unidades de Harina a $700 cada una
+- 10 unidades de Aceite a $1800 cada una
+
+Sin esta tabla, no podríamos representar correctamente que una compra tiene varios productos.
+
+Esta tabla resuelve la relación muchos a muchos entre compras y productos.
+
+compras N ─── N productos
+
+En una base relacional se transforma en:
+
+compras 1 ─── N detalle_compra N ─── 1 productos
+Campos mínimos recomendados
+id_detalle_compra
+compra_id
+producto_id
+cantidad
+precio_unitario
+subtotal
+Clave primaria
+id_detalle_compra
+Foreign keys
+compra_id → compras.id_compra
+producto_id → productos.id_producto
+Relaciones
+
+Una compra puede tener muchos renglones de detalle.
+
+compras 1 ─── N detalle_compra
+
+Un producto puede aparecer en muchos detalles de compra.
+
+productos 1 ─── N detalle_compra
+10. Tabla ventas
+Explicación en lenguaje natural
+
+La tabla ventas representa una venta realizada.
+
+Ejemplo:
+
+Venta #1
+Fecha: 12/05/2026
+Cliente: Consumidor final
+Total: $25.000
+Usuario que registró la venta: Martina
+
+Igual que en compras, esta tabla funciona como encabezado. No guarda producto por producto. Los productos vendidos se guardan en detalle_venta.
+
+Para no agrandar demasiado el proyecto, podemos dejar el cliente como texto. Más adelante, si quisiéramos profesionalizarlo, podríamos crear una tabla clientes.
+
+Campos mínimos recomendados
+id_venta
+usuario_id
+fecha_venta
+cliente_nombre
+numero_comprobante
+total
+observacion
+Clave primaria
+id_venta
+Foreign keys
+usuario_id → usuarios.id_usuario
+Relación opcional futura
+
+Si más adelante se crea una tabla clientes, entonces ventas podría tener:
+
+cliente_id → clientes.id_cliente
+
+Pero en esta primera versión no es necesario.
+
+Relaciones
+
+Un usuario puede registrar muchas ventas.
+
+usuarios 1 ─── N ventas
+
+Una venta puede tener muchos productos en su detalle.
+
+ventas 1 ─── N detalle_venta
+
+Una venta puede generar movimientos de salida de stock.
+
+ventas 1 ─── N movimientos_stock
+11. Tabla detalle_venta
+Explicación en lenguaje natural
+
+La tabla detalle_venta guarda los productos incluidos dentro de cada venta.
+
+Ejemplo:
+
+Venta #1:
+- 2 unidades de Leche a $1400 cada una
+- 1 unidad de Harina a $1100
+- 3 unidades de Gaseosa a $1800 cada una
+
+Es fundamental porque permite saber qué productos se vendieron, en qué cantidad y a qué precio.
+
+También permite analizar la rotación de productos, los productos más vendidos y los ingresos por producto.
+
+Esta tabla resuelve la relación muchos a muchos entre ventas y productos.
+
+ventas N ─── N productos
+
+En una base relacional se transforma en:
+
+ventas 1 ─── N detalle_venta N ─── 1 productos
+Campos mínimos recomendados
+id_detalle_venta
+venta_id
+producto_id
+cantidad
+precio_unitario
+subtotal
+Clave primaria
+id_detalle_venta
+Foreign keys
+venta_id → ventas.id_venta
+producto_id → productos.id_producto
+Relaciones
+
+Una venta puede tener muchos renglones de detalle.
+
+ventas 1 ─── N detalle_venta
+
+Un producto puede aparecer en muchos detalles de venta.
+
+productos 1 ─── N detalle_venta
+
+
+Resumen de tablas y campos mínimos
+| Tabla               | Campos mínimos                                                                                                                                            |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `categorias`        | `id_categoria`, `nombre`, `descripcion`, `activo`                                                                                                         |
+| `proveedores`       | `id_proveedor`, `nombre`, `cuit`, `telefono`, `email`, `direccion`, `activo`                                                                              |
+| `productos`         | `id_producto`, `nombre`, `descripcion`, `categoria_id`, `proveedor_id`, `precio_costo`, `precio_venta`, `stock_minimo`, `activo`, `fecha_alta`            |
+| `depositos`         | `id_deposito`, `nombre`, `direccion`, `descripcion`, `activo`                                                                                             |
+| `usuarios`          | `id_usuario`, `nombre`, `apellido`, `email`, `rol`, `activo`                                                                                              |
+| `tipos_movimiento`  | `id_tipo_movimiento`, `nombre`, `descripcion`, `signo`, `activo`                                                                                          |
+| `movimientos_stock` | `id_movimiento`, `producto_id`, `deposito_id`, `tipo_movimiento_id`, `usuario_id`, `cantidad`, `fecha_movimiento`, `observacion`, `compra_id`, `venta_id` |
+| `compras`           | `id_compra`, `proveedor_id`, `usuario_id`, `fecha_compra`, `numero_comprobante`, `total`, `observacion`                                                   |
+| `detalle_compra`    | `id_detalle_compra`, `compra_id`, `producto_id`, `cantidad`, `precio_unitario`, `subtotal`                                                                |
+| `ventas`            | `id_venta`, `usuario_id`, `fecha_venta`, `cliente_nombre`, `numero_comprobante`, `total`, `observacion`                                                   |
+| `detalle_venta`     | `id_detalle_venta`, `venta_id`, `producto_id`, `cantidad`, `precio_unitario`, `subtotal`                                                                  |
+
+
+Resumen de foreign keys
+| Tabla               | Foreign keys                                                                              |
+| ------------------- | ----------------------------------------------------------------------------------------- |
+| `categorias`        | No tiene                                                                                  |
+| `proveedores`       | No tiene                                                                                  |
+| `productos`         | `categoria_id`, `proveedor_id`                                                            |
+| `depositos`         | No tiene                                                                                  |
+| `usuarios`          | No tiene                                                                                  |
+| `tipos_movimiento`  | No tiene                                                                                  |
+| `movimientos_stock` | `producto_id`, `deposito_id`, `tipo_movimiento_id`, `usuario_id`, `compra_id`, `venta_id` |
+| `compras`           | `proveedor_id`, `usuario_id`                                                              |
+| `detalle_compra`    | `compra_id`, `producto_id`                                                                |
+| `ventas`            | `usuario_id`                                                                              |
+| `detalle_venta`     | `venta_id`, `producto_id`                                                                 |
+
+
+RESUMEN GENERAL DE Relaciones
+categorias 1 ─── N productos
+
+proveedores 1 ─── N productos
+proveedores 1 ─── N compras
+
+usuarios 1 ─── N compras
+usuarios 1 ─── N ventas
+usuarios 1 ─── N movimientos_stock
+
+depositos 1 ─── N movimientos_stock
+
+tipos_movimiento 1 ─── N movimientos_stock
+
+productos 1 ─── N movimientos_stock
+productos 1 ─── N detalle_compra
+productos 1 ─── N detalle_venta
+
+compras 1 ─── N detalle_compra
+compras 1 ─── N movimientos_stock
+
+ventas 1 ─── N detalle_venta
+ventas 1 ─── N movimientos_stock
+
+
+Concepto clave del cálculo de stock
+
+El stock actual se calculará desde los movimientos.
+
+La tabla productos tendrá stock_minimo, pero no tendrá stock_actual.
+
+Ejemplo:
+
+Producto: Leche entera 1L
+
+Entrada por compra: 100 unidades
+Salida por venta: 30 unidades
+Ajuste negativo por rotura: 5 unidades
+
+Stock actual = 100 - 30 - 5 = 65 unidades
+
+La lógica del cálculo será:
+
+cantidad del movimiento * signo del tipo de movimiento
+
+Ejemplo:
+
+Entrada por compra:
+cantidad = 100
+signo = 1
+resultado = 100
+
+Salida por venta:
+cantidad = 30
+signo = -1
+resultado = -30
+
+Después, sumando todos los resultados de cada producto, se obtiene el stock actual.
+
+Más adelante, cuando creemos la base en MySQL, podemos crear una vista llamada:
+
+vw_stock_actual
+
+Esa vista mostrará el stock actual calculado por producto y, si queremos, también por depósito.
+
+Recomendación de alcance
+
+Para esta primera versión, no agregaría más tablas. Este modelo ya es suficientemente completo para el trabajo.
+
+No agregaría todavía:
+
+clientes
+login real
+roles avanzados
+permisos
+facturación
+medios de pago
+impuestos
+órdenes de compra
+devoluciones complejas
+
+El modelo actual ya permite explicar bien:
+
+Entidades
+Atributos
+Claves primarias
+Claves foráneas
+Relaciones 1 a N
+Relaciones N a N resueltas con tablas detalle
+Normalización
+Movimientos de stock
+Cálculo de stock actual
+Consultas SQL
+Análisis posterior en Python
+
+Esta base está bien planteada para que después puedan avanzar a draw.io, MySQL Workbench y análisis con Python sin perderse.
