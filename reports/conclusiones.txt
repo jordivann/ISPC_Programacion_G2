@@ -1,0 +1,22 @@
+- Se analizaron 20 productos cargados en el catalogo.
+- 8 productos requieren reposicion, lo que representa el 40.00% del catalogo.
+- El valor total del stock disponible a precio de costo es de $684,600.00.
+- El valor potencial del stock a precio de venta es de $1,083,750.00.
+- La categoria con mayor valor de stock a costo es Alimentos, con $412,500.00.
+- Se registraron 23 movimientos de stock entre entradas, salidas y ajustes.
+- El producto con mayor rotacion aproximada es Gaseosa cola 2.25L, con una rotacion de 18.75%.
+- El importe total comprado registrado es de $1,526,000.00, mientras que el importe total vendido registrado es de $124,750.00.
+- El stock actual no se almacena manualmente en la tabla productos; se calcula a partir de los movimientos de stock, reduciendo el riesgo de inconsistencias.
+- Alertas principales detectadas:
+- Productos sin stock: 8
+- Productos con reposicion necesaria: 8
+- Productos sin stock detectados:
+- - Cable HDMI 1.5m (Tecnología)
+- - Cuaderno A4 rayado (Librería)
+- - Destornillador plano (Ferretería)
+- - Lapicera azul (Librería)
+- - Martillo carpintero (Ferretería)
+- - Mouse USB (Tecnología)
+- - Resma A4 500 hojas (Librería)
+- - Tornillos 8mm x unidad (Ferretería)
+- Productos con rotacion aproximada alta: 0
