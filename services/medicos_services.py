@@ -1,119 +1,60 @@
-from services.db_services import ejecutar_select
+from services.db_services import ejecutar_modificacion , ejecutar_select
 
-
-def listar_especialidades():
+# Permite crear un nuevo médico en la base de datos
+def crear_medico(nombre, apellido, matricula, telefono, email, especialidad):
+    
     consulta = """
-        SELECT 
-            id_especialidad AS ID,
-            nombre AS Especialidad,
-            descripcion AS Descripcion
-        FROM especialidades
-        ORDER BY nombre;
+    INSERT INTO medicos
+    (nombre, apellido, matricula, telefono, email, especialidad)
+    VALUES (%s, %s, %s, %s, %s, %s)
     """
 
-    return ejecutar_select(consulta)
+    return ejecutar_modificacion(consulta, (nombre, apellido, matricula, telefono, email, especialidad))
 
-
-def obtener_especialidades_resumidas():
+# Permite buscar un médico por su matrícula
+def buscar_medico_por_matricula(matricula):
     consulta = """
-        SELECT 
-            id_especialidad AS ID,
-            nombre AS Especialidad
-        FROM especialidades
-        ORDER BY nombre;
-    """
+        SELECT *
+        FROM medicos
+        WHERE matricula = %s;
+        """
+    resultado = ejecutar_select(consulta, (matricula,))
 
-    return ejecutar_select(consulta)
+    if resultado:
+        return resultado[0]  # Devuelve el primer resultado encontrado
+    
+    return None  # Si no se encuentra ningún médico con esa matrícula, devuelve None
 
-
+# Permite listar todos los médicos registrados en la base de datos
 def listar_medicos():
     consulta = """
         SELECT 
-            m.id_medico AS ID,
-            CONCAT(m.nombre, ' ', m.apellido) AS Medico,
-            m.matricula AS Matricula,
-            m.telefono AS Telefono,
-            e.nombre AS Especialidad
-        FROM medicos m
-        INNER JOIN especialidades e
-            ON m.id_especialidad = e.id_especialidad
-        ORDER BY e.nombre, m.apellido, m.nombre;
-    """
-
+            id_medico AS ID,
+            CONCAT(apellido, ' ', nombre) AS Médico,
+            matricula AS Matrícula
+        FROM medicos
+        ORDER BY apellido, nombre;
+        """
     return ejecutar_select(consulta)
 
 
-def obtener_medicos_resumidos():
+def actualizar_medico(matricula,telefono, email):
+
     consulta = """
-        SELECT 
-            m.id_medico AS ID,
-            CONCAT(m.nombre, ' ', m.apellido) AS Medico,
-            e.nombre AS Especialidad
-        FROM medicos m
-        INNER JOIN especialidades e
-            ON m.id_especialidad = e.id_especialidad
-        ORDER BY e.nombre, m.apellido, m.nombre;
-    """
+        UPDATE medicos
+        SET telefono = %s,
+            email = %s
+        WHERE matricula = %s;
+        """
+    
+    return ejecutar_modificacion(consulta, (telefono, email, matricula))
 
-    return ejecutar_select(consulta)
-
-
-def buscar_medicos_por_especialidad(id_especialidad):
+# Permite eliminar un médico de la base de datos utilizando su matrícula
+def eliminar_medico(matricula):
+    
     consulta = """
-        SELECT 
-            m.id_medico AS ID,
-            CONCAT(m.nombre, ' ', m.apellido) AS Medico,
-            m.matricula AS Matricula,
-            m.telefono AS Telefono,
-            m.email AS Email,
-            e.nombre AS Especialidad
-        FROM medicos m
-        INNER JOIN especialidades e
-            ON m.id_especialidad = e.id_especialidad
-        WHERE e.id_especialidad = %s
-        ORDER BY m.apellido, m.nombre;
-    """
-
-    return ejecutar_select(consulta, (id_especialidad,))
-
-
-def ver_disponibilidad_por_medico(id_medico):
-    consulta = """
-        SELECT 
-            CONCAT(m.nombre, ' ', m.apellido) AS Medico,
-            e.nombre AS Especialidad,
-            d.dia_semana AS Dia,
-            d.hora_inicio AS Desde,
-            d.hora_fin AS Hasta,
-            d.activo AS Activo
-        FROM disponibilidad_medica d
-        INNER JOIN medicos m
-            ON d.medico_id = m.id_medico
-        INNER JOIN especialidades e
-            ON m.id_especialidad = e.id_especialidad
-        WHERE d.medico_id = %s
-        ORDER BY d.dia_semana, d.hora_inicio;
-    """
-
-    return ejecutar_select(consulta, (id_medico,))
-
-
-def ver_disponibilidad_por_especialidad(id_especialidad):
-    consulta = """
-        SELECT 
-            e.nombre AS Especialidad,
-            CONCAT(m.nombre, ' ', m.apellido) AS Medico,
-            d.dia_semana AS Dia,
-            d.hora_inicio AS Desde,
-            d.hora_fin AS Hasta
-        FROM medicos m
-        INNER JOIN especialidades e
-            ON m.id_especialidad = e.id_especialidad
-        INNER JOIN disponibilidad_medica d
-            ON m.id_medico = d.medico_id
-        WHERE e.id_especialidad = %s
-          AND d.activo = TRUE
-        ORDER BY m.apellido, m.nombre, d.dia_semana, d.hora_inicio;
-    """
-
-    return ejecutar_select(consulta, (id_especialidad,))
+        
+        DELETE FROM medicos
+        WHERE matricula = %s;
+        """
+    return ejecutar_modificacion(consulta, (matricula,))
