@@ -1,4 +1,5 @@
-from menus.menu_principal import mostrar_menu
+from menus.menu_principal import menu_principal
+
 
 if __name__ == "__main__":
-    mostrar_menu()
+    menu_principal()

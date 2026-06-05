@@ -1,5 +1,5 @@
-from conexion import conectar
-
+from database.conexion import conectar
+import pymysql.cursors
 
 def ejecutar_select(consulta, parametros=None):
     """
@@ -7,9 +7,11 @@ def ejecutar_select(consulta, parametros=None):
     """
 
     conexion = conectar()
-    cursor = conexion.cursor(dictionary=True)
+
+    cursor = conexion.cursor(pymysql.cursors.DictCursor)
 
     cursor.execute(consulta, parametros or ())
+
     resultados = cursor.fetchall()
 
     cursor.close()
@@ -23,11 +25,12 @@ def ejecutar_modificacion(consulta, parametros=None):
     Ejecuta INSERT, UPDATE o DELETE.
     Realiza commit porque modifica datos.
     """
-
     conexion = conectar()
+
     cursor = conexion.cursor()
 
     cursor.execute(consulta, parametros or ())
+
     conexion.commit()
 
     filas_afectadas = cursor.rowcount

@@ -1,48 +1,65 @@
-from services.db_services import ejecutar_select
+from services.db_services import ejecutar_modificacion, ejecutar_select
 
 
-def listar_pacientes():
+def crear_paciente(nombre, apellido, dni, fecha_nacimiento, telefono, email, direccion):
     consulta = """
-        SELECT 
-            id_paciente AS ID,
-            nombre AS Nombre,
-            apellido AS Apellido,
-            dni AS DNI,
-            telefono AS Telefono,
-            email AS Email
-        FROM pacientes
-        ORDER BY apellido, nombre;
+    INSERT INTO pacientes
+    (nombre, apellido, dni, fecha_nacimiento, telefono, email, direccion)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
 
-    return ejecutar_select(consulta)
+    return ejecutar_modificacion(
+        consulta,
+        (nombre, apellido, dni, fecha_nacimiento, telefono, email, direccion)
+    )
 
 
 def buscar_paciente_por_dni(dni):
     consulta = """
-        SELECT 
-            id_paciente AS ID,
-            nombre AS Nombre,
-            apellido AS Apellido,
-            dni AS DNI,
-            fecha_nacimiento AS FechaNacimiento,
-            telefono AS Telefono,
-            email AS Email,
-            direccion AS Direccion
+        SELECT *
         FROM pacientes
         WHERE dni = %s;
     """
 
-    return ejecutar_select(consulta, (dni,))
+    resultado = ejecutar_select(consulta, (dni,))
+
+    if resultado:
+        return resultado[0]
+
+    return None
 
 
-def obtener_pacientes_resumidos():
+def listar_pacientes():
     consulta = """
-        SELECT 
+        SELECT
             id_paciente AS ID,
-            CONCAT(nombre, ' ', apellido) AS Paciente,
+            CONCAT(apellido, ' ', nombre) AS Paciente,
             dni AS DNI
         FROM pacientes
         ORDER BY apellido, nombre;
     """
 
     return ejecutar_select(consulta)
+
+
+def actualizar_paciente(id_paciente, telefono, direccion):
+    consulta = """
+        UPDATE pacientes
+        SET telefono = %s,
+            direccion = %s
+        WHERE id_paciente = %s;
+    """
+
+    return ejecutar_modificacion(
+        consulta,
+        (telefono, direccion, id_paciente)
+    )
+
+
+def eliminar_paciente(dni):
+    consulta = """
+        DELETE FROM pacientes
+        WHERE dni = %s;
+    """
+
+    return ejecutar_modificacion(consulta, (dni,))
